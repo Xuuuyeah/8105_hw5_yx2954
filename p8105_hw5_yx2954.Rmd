@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(tidyverse)
 library(plotly)
+library(knitr)
 ```
 
 # Problem 1
@@ -21,7 +22,7 @@ library(plotly)
 ```{r}
 check_duplicate_birthdays = function(n) {
   if ((as.integer(n) <= 0) == TRUE) {
-    stop("Argument x should be positive integer")
+    stop("Argument n should be positive integer")
   }
   birthdays = sample(1:365, n, replace = TRUE)
   return(length(birthdays) != length(unique(birthdays)))
@@ -58,18 +59,13 @@ The plot shows that the probability of at lease two people share birthdays incre
 
 # Problem 2
 
-## Set variables
-```{r}
-n = 30
-sigma = 5
-mu = c(0:6)
-alpha = 0.05
-simulations = 5000
-```
-
 ## Build function
 ```{r}
 simulate_test = function(mu, n = 30, sigma = 5, simulations = 5000, alpha = 0.05) {
+  if (as.integer(mu) != mu) {
+    stop("Argument mu should be integer")
+  }
+  
   test_output = vector("list", length = simulations)
   
   for (i in 1:simulations) {
@@ -102,6 +98,7 @@ simulate_test = function(mu, n = 30, sigma = 5, simulations = 5000, alpha = 0.05
 ```{r}
 set.seed(1)
 
+mu = 0:6
 test_result = map_dfr(mu, simulate_test)
 
 plot_ly(data = test_result, x = ~mu, y = ~power, type = 'scatter', mode = 'lines+markers') |>
@@ -125,3 +122,33 @@ plot_ly(data = test_result) |>
   )
 ```
 The average estimate of mu only in samples for which the null was rejected is not equal to the true mu when the true mu is 1, and gradually approches to the true mean when the true mean increases. This is because the average estimate of mu only in samples for which the null was rejected is biased, but as the effect size increase, the majority of samples are rejected, reducing the selection bias.
+
+# Problem 3
+
+```{r}
+url = "https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"
+
+homicide_df = read_csv(url) |>
+  arrange(reported_date) 
+
+head(homicide_df)
+```
+
+## Describe the raw data
+
+The raw data describe the basic information of homicides in 50 large U.S. cities from 2007-01-01 to 2017-12-31, including the date, victim name, race, age, sex, location and case status.
+
+## Summarize within cities 
+
+```{r}
+homicide_summary = homicide_df |>
+  mutate(city_state = paste(city, state, sep = ", ")) |>
+  group_by(city_state) |>
+  summarize(
+    total_homicides = n(),
+    unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  )
+
+kable(homicide_summary, caption = "Summary of Homicides by City and State", col.names = c("City", "Total", "Unsolved"))
+```
+
