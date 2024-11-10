@@ -56,5 +56,72 @@ ggplot(results, aes(x = n_range, y = prob)) +
 
 The plot shows that the probability of at lease two people share birthdays increases as group size grows. It reaches 0.5 as group size is 23 and is approaching 1.0 near 50 people. The slope decreases as the group size gets larger, indicating a slower probability increase at higher group sizes.
 
+# Problem 2
 
+## Set variables
+```{r}
+n = 30
+sigma = 5
+mu = c(0:6)
+alpha = 0.05
+simulations = 5000
+```
+
+## Build function
+```{r}
+simulate_test = function(mu, n = 30, sigma = 5, simulations = 5000, alpha = 0.05) {
+  test_output = vector("list", length = simulations)
+  
+  for (i in 1:simulations) {
+    data = rnorm(n, mean = mu, sd = sigma)
+  
+    test_result = t.test(data, mu = 0)
+    
+    test_output[[i]] = broom::tidy(test_result) |>
+      select(estimate, p.value)
+  }
+  
+  output_df = bind_rows(test_output)
+  
+  power = mean(output_df$p.value < alpha)
+  
+  avg_estimate_all = mean(output_df$estimate)
+  
+  avg_estimate_rejected = mean(output_df$estimate[output_df$p.value < alpha], na.rm = TRUE)
+  
+  return(tibble(
+    mu = mu,
+    power = power,
+    avg_estimate_all = avg_estimate_all,
+    avg_estimate_rejected = avg_estimate_rejected
+  ))
+}
+```
+
+## Question 1
+```{r}
+set.seed(1)
+
+test_result = map_dfr(mu, simulate_test)
+
+plot_ly(data = test_result, x = ~mu, y = ~power, type = 'scatter', mode = 'lines+markers') |>
+  layout(title = "Power of Test vs True Mean (μ)",
+         xaxis = list(title = "True Value of μ"),
+         yaxis = list(title = "Proportion of Null Rejected (Power)"))
+```
+
+From the figure above, the bigger the effect size, the higher the power.
+
+## Question 2
+```{r}
+plot_ly(data = test_result) |>
+  add_trace(x = ~mu, y = ~avg_estimate_all, type = 'scatter', mode = 'lines+markers', name = "Average Estimate (All Samples)") %>%
+  add_trace(x = ~mu, y = ~avg_estimate_rejected, type = 'scatter', mode = 'lines+markers', name = "Average Estimate (Rejected Samples)") %>%
+  layout(
+    title = "Average Estimate of µ̂ vs True Value of µ",
+    xaxis = list(title = "True Value of µ"),
+    yaxis = list(title = "Average Estimate of µ̂"),
+    legend = list(x = 0.1, y = 0.9)
+  )
+```
 The average estimate of mu only in samples for which the null was rejected is not equal to the true mu when the true mu is 1, and gradually approches to the true mean when the true mean increases. This is because the average estimate of mu only in samples for which the null was rejected is biased, but as the effect size increase, the majority of samples are rejected, reducing the selection bias.
