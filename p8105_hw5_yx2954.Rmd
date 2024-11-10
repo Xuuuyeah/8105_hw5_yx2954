@@ -143,6 +143,7 @@ The raw data describe the basic information of homicides in 50 large U.S. cities
 ```{r}
 homicide_summary = homicide_df |>
   mutate(city_state = paste(city, state, sep = ", ")) |>
+  select(-city, -state) |>
   group_by(city_state) |>
   summarize(
     total_homicides = n(),
@@ -150,5 +151,27 @@ homicide_summary = homicide_df |>
   )
 
 kable(homicide_summary, caption = "Summary of Homicides by City and State", col.names = c("City", "Total", "Unsolved"))
+```
+## Prop test in Baltimore
+```{r}
+baltimore_test =
+  homicide_summary |>
+  filter(city_state == "Baltimore, MD") |>
+  with(prop.test(unsolved_homicides, total_homicides)) |>
+  broom::tidy() |>
+  select(estimate, p.value)
+```
+
+## Prop test in other cities
+```{r}
+unsolved_prop_test = homicide_summary |>
+  mutate(
+    test_results = map2(unsolved_homicides, total_homicides, ~ prop.test(.x, .y)),
+    tidy_results = map(test_results, broom::tidy)
+  ) |>
+  unnest(tidy_results) |>
+  select(city_state, estimate, conf.low, conf.high)
+
+kable(unsolved_prop_test, caption = "Summary of estimated unsolved proportion by City", col.names = c("City", "Estimated proportion", "CI_lower", "CI_upper"))
 ```
 
