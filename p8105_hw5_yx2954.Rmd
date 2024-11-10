@@ -1,0 +1,60 @@
+---
+title: "p8105_hw5_yx2954"
+author: "Yiran Xu"
+date: "2024-11-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(plotly)
+```
+
+# Problem 1
+
+## Make function
+```{r}
+check_duplicate_birthdays = function(n) {
+  if ((as.integer(n) <= 0) == TRUE) {
+    stop("Argument x should be positive integer")
+  }
+  birthdays = sample(1:365, n, replace = TRUE)
+  return(length(birthdays) != length(unique(birthdays)))
+  }
+```
+
+## Simulation run
+```{r}
+run_times = 10000
+n_range = 2:50
+prob = numeric(length(n_range))
+```
+
+```{r}
+for (n in n_range) {
+  duplicates = sum(replicate(run_times, check_duplicate_birthdays(n)))
+  prob[n - 1] = duplicates / run_times
+}
+```
+
+## Make plot
+```{r}
+results = data.frame(GroupSize = n_range, Probability = prob)
+
+ggplot(results, aes(x = n_range, y = prob)) +
+  geom_line(color = "blue") +
+  geom_point(color = "red") +
+  labs(title = "Probability of At Least Two People Sharing a Birthday by Group Size",
+       x = "Group Size", y = "Probability of At Least Two Share Birthday") +
+  theme_minimal()
+```
+
+The plot shows that the probability of at lease two people share birthdays increases as group size grows. It reaches 0.5 as group size is 23 and is approaching 1.0 near 50 people. The slope decreases as the group size gets larger, indicating a slower probability increase at higher group sizes.
+
+
+The average estimate of mu only in samples for which the null was rejected is not equal to the true mu when the true mu is 1, and gradually approches to the true mean when the true mean increases. This is because the average estimate of mu only in samples for which the null was rejected is biased, but as the effect size increase, the majority of samples are rejected, reducing the selection bias.
