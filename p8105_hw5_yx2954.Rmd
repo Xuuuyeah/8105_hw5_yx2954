@@ -2,7 +2,7 @@
 title: "p8105_hw5_yx2954"
 author: "Yiran Xu"
 date: "2024-11-09"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -12,7 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(ggplot2)
 library(tidyverse)
-library(plotly)
 library(knitr)
 ```
 
@@ -101,26 +100,46 @@ set.seed(1)
 mu = 0:6
 test_result = map_dfr(mu, simulate_test)
 
-plot_ly(data = test_result, x = ~mu, y = ~power, type = 'scatter', mode = 'lines+markers') |>
-  layout(title = "Power of Test vs True Mean (μ)",
-         xaxis = list(title = "True Value of μ"),
-         yaxis = list(title = "Proportion of Null Rejected (Power)"))
+kable(test_result, caption = "Power Increases With Effect Size", col.names = c("Effect Size", "power", "All Average Estimate", "Rejected Average Estimate"))
+
+ggplot(test_result, aes(x = mu, y = power)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Power of Test vs True Mean (μ)",
+    x = "True Value of μ",
+    y = "Proportion of Null Rejected (Power)"
+  ) +
+  theme_minimal() +
+  ylim(0, 1)
 ```
 
 From the figure above, the bigger the effect size, the higher the power.
 
 ## Question 2
 ```{r}
-plot_ly(data = test_result) |>
-  add_trace(x = ~mu, y = ~avg_estimate_all, type = 'scatter', mode = 'lines+markers', name = "Average Estimate (All Samples)") %>%
-  add_trace(x = ~mu, y = ~avg_estimate_rejected, type = 'scatter', mode = 'lines+markers', name = "Average Estimate (Rejected Samples)") %>%
-  layout(
+ggplot(test_result, aes(x = mu)) +
+  geom_line(aes(y = avg_estimate_all, color = "Average Estimate (All Samples)"), size = 1) +
+  geom_point(aes(y = avg_estimate_all, color = "Average Estimate (All Samples)"), size = 2) +
+  geom_line(aes(y = avg_estimate_rejected, color = "Average Estimate (Rejected Samples)"), size = 1) +
+  geom_point(aes(y = avg_estimate_rejected, color = "Average Estimate (Rejected Samples)"), size = 2, shape = 17) +
+  labs(
     title = "Average Estimate of µ̂ vs True Value of µ",
-    xaxis = list(title = "True Value of µ"),
-    yaxis = list(title = "Average Estimate of µ̂"),
-    legend = list(x = 0.1, y = 0.9)
-  )
+    x = "True Value of µ",
+    y = "Average Estimate of µ̂",
+    color = "Legend"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10)
+  ) +
+  scale_color_manual(values = c("Average Estimate (All Samples)" = "blue", 
+                                "Average Estimate (Rejected Samples)" = "red"))
+
 ```
+
 The average estimate of mu only in samples for which the null was rejected is not equal to the true mu when the true mu is 1, and gradually approches to the true mean when the true mean increases. This is because the average estimate of mu only in samples for which the null was rejected is biased, but as the effect size increase, the majority of samples are rejected, reducing the selection bias.
 
 # Problem 3
@@ -160,7 +179,10 @@ baltimore_test =
   with(prop.test(unsolved_homicides, total_homicides)) |>
   broom::tidy() |>
   select(estimate, p.value)
+
+head(baltimore_test)
 ```
+The estimate proportion is `r baltimore_test$estimate` with a p_value = `r baltimore_test$p.value`
 
 ## Prop test in other cities
 ```{r}
@@ -176,7 +198,7 @@ kable(unsolved_prop_test, caption = "Summary of estimated unsolved proportion by
 ```
 
 ## Make plot
-```{r}
+```{r  fig.height=15, fig.width=8}
 unsolved_prop_test |>
   arrange(desc(estimate)) |>
   mutate(city_state = factor(city_state, levels = city_state)) |>
@@ -189,6 +211,8 @@ unsolved_prop_test |>
     y = "City"
   ) +
   theme_minimal() +
-  theme(axis.text.y = element_text(size = 7))
+  theme(axis.text.y = element_text(size = 9))
+
 ```
 
+Chicago has the highest estimated unsolved homicides rate, while Tulsa has the lowest, but very low confidence, as the sample size is way too small for a precise estimation.
