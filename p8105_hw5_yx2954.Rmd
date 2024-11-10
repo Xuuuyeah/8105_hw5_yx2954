@@ -175,3 +175,20 @@ unsolved_prop_test = homicide_summary |>
 kable(unsolved_prop_test, caption = "Summary of estimated unsolved proportion by City", col.names = c("City", "Estimated proportion", "CI_lower", "CI_upper"))
 ```
 
+## Make plot
+```{r}
+unsolved_prop_test |>
+  arrange(desc(estimate)) |>
+  mutate(city_state = factor(city_state, levels = city_state)) |>
+  ggplot(aes(x = estimate, y = city_state)) +
+  geom_point(size = 1) +
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0.2) +
+  labs(
+    title = "Proportion of Unsolved Homicides by City",
+    x = "Proportion of Unsolved Homicides",
+    y = "City"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 7))
+```
+
