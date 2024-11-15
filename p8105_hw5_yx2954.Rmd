@@ -95,7 +95,7 @@ simulate_test = function(mu, n = 30, sigma = 5, simulations = 5000, alpha = 0.05
 
 ## Question 1
 ```{r}
-set.seed(1)
+set.seed(123)
 
 mu = 0:6
 test_result = map_dfr(mu, simulate_test)
@@ -142,6 +142,8 @@ ggplot(test_result, aes(x = mu)) +
 
 The average estimate of mu only in samples for which the null was rejected is not equal to the true mu when the true mu is 1, and gradually approches to the true mean when the true mean increases. This is because the average estimate of mu only in samples for which the null was rejected is biased, but as the effect size increase, the majority of samples are rejected, reducing the selection bias.
 
+When mu = 0, the average estimate of mu only in samples for which the null was rejected is almost equal to the true mu, as the sampling distribution is the same to the true distribution.
+
 # Problem 3
 
 ```{r}
@@ -157,9 +159,11 @@ The raw data describe the basic information of homicides in 50 large U.S. cities
 
 ## Summarize within cities 
 
+Data from Tulsa, AL is excluded, as no city named Tulsa is found in AL state.
 ```{r}
 homicide_summary = homicide_df |>
   mutate(city_state = paste(city, state, sep = ", ")) |>
+  filter(city_state != "Tulsa, AL") |>
   select(-city, -state) |>
   group_by(city_state) |>
   summarize(
@@ -196,7 +200,7 @@ kable(unsolved_prop_test, caption = "Summary of estimated unsolved proportion by
 ```
 
 ## Make plot
-```{r  fig.height=15, fig.width=8}
+```{r  fig.height=10, fig.width=8}
 unsolved_prop_test |>
   arrange(desc(estimate)) |>
   mutate(city_state = factor(city_state, levels = city_state)) |>
